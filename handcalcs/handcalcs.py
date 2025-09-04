@@ -1596,7 +1596,7 @@ def format_calc_line(line: CalcLine, **config_options) -> CalcLine:
     if line.comment:
         comment_space = "\\;"
         comment = format_strings(line.comment, comment=True)
-    line.latex = f"{latex_code[0:second_equals + 1]} {latex_code[second_equals + 2:]} {comment_space} {comment}\n"
+    line.latex = f"{latex_code} {comment_space} {comment}\n"
     return line
 
 
