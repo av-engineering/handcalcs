@@ -1257,7 +1257,7 @@ def latex_repr(
         if use_scientific_notation:
             rendered_string = f"{item:.{precision}e{preferred_formatter}}"
         else:
-            rendered_string = f"{round(item, precision):{preferred_formatter}}"
+            rendered_string = f"{item:.{precision}f{preferred_formatter}}"
     except (ValueError, TypeError):
         try:
             if use_scientific_notation and isinstance(item, complex):
@@ -1271,10 +1271,10 @@ def latex_repr(
                     f"\\left( {rendered_real} + {rendered_imag} j \\right)"
                 )
             elif use_scientific_notation and not isinstance(item, int):
-                rendered_string = f"{round(item, precision)}"
+                rendered_string = f"{item:.{precision}e}"
                 rendered_string = swap_scientific_notation_str(rendered_string)
             elif not isinstance(item, int):
-                rendered_string = f"{round(item, precision)}"
+                rendered_string = f"{item:.{precision}f}"
             else:
                 rendered_string = str(item)
         except (ValueError, TypeError):
@@ -1591,22 +1591,22 @@ def format_lines(line_object, **config_options):
 def format_calc_line(line: CalcLine, **config_options) -> CalcLine:
     latex_code = line.latex
 
-    latex_code = latex_code.replace("=", "&=", 1)
-    #
-    #
+    equals_signs = [idx for idx, char in enumerate(latex_code) if char == "="]
+    second_equals = equals_signs[1]  # Change to 1 for second equals
+    latex_code = latex_code.replace("=", "&=")  # Align with ampersands for '\align'
     comment_space = ""
     comment = ""
     if line.comment:
         comment_space = "\\;"
         comment = format_strings(line.comment, comment=True)
-    line.latex = f"{latex_code} {comment_space} {comment}\n"
+    line.latex = f"{latex_code[0:second_equals + 1]} {latex_code[second_equals + 2:]} {comment_space} {comment}\n"
     return line
 
 
 @format_lines.register(NumericCalcLine)
 def format_calc_line(line: NumericCalcLine, **config_options) -> NumericCalcLine:
     latex_code = line.latex
-    latex_code = latex_code.replace("=", "&=", 1)
+    latex_code = latex_code.replace("=", "&=")  # Align with ampersands for '\align'
     comment_space = ""
     comment = ""
     if line.comment:
@@ -1632,7 +1632,7 @@ def format_conditional_line(line: ConditionalLine, **config_options) -> Conditio
             comment = format_strings(line.comment, comment=True)
 
         line_break = f"{config_options['line_break']}\n"
-        first_line = f"\\text{a}Da{b}&\quad {latex_condition}: {line_break}"
+        first_line = f"&\\text{a}Since, {b} {latex_condition} : {comment_space} {comment} {line_break}"
         if line.condition_type == "else":
             first_line = ""
         line.latex_condition = first_line
@@ -1657,9 +1657,9 @@ def format_long_calc_line(line: LongCalcLine, **config_options) -> LongCalcLine:
     for positioning within the "\aligned" latex environment.
     """
     latex_code = line.latex
-    long_latex = latex_code.replace("=", "=\\\\&=", 2)
-    long_latex = long_latex.replace("=\\\\&=", "&=", 1)
-    line_break = ""
+    long_latex = latex_code.replace("=", "\\\\&=")  # Change all...
+    long_latex = long_latex.replace("\\\\&=", "&=", 1)  # ...except the first one
+    line_break = f"{config_options['line_break']}\n"
     comment_space = ""
     comment = ""
     if line.comment:
@@ -2063,7 +2063,7 @@ def swap_symbolic_calcs(
         swap_comparison_ops,
         swap_for_greek,
         swap_prime_notation,
-        # swap_long_var_strs,
+        swap_long_var_strs,
         swap_double_subscripts,
         extend_subscripts,
         swap_superscripts,
@@ -2480,14 +2480,14 @@ def list_to_deque(los: List[str]) -> deque:
 def swap_double_subscripts(pycode_as_deque: deque, **config_options) -> deque:
     """
     For variables or function names that contain a double subscript '__',
-    the double subscript will be replaced with LaTeX space: "\\, "
+    the double subscript will be replaced with LaTeX space: "\\ "
     """
     swapped_deque = deque([])
     for item in pycode_as_deque:
         if isinstance(item, deque):
             new_item = swap_double_subscripts(item)
         elif isinstance(item, str) and "__" in item:
-            new_item = item.replace("__", "\\, ")
+            new_item = item.replace("__", "\\ ")
         else:
             new_item = item
         swapped_deque.append(new_item)
