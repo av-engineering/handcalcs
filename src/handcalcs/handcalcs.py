@@ -1632,7 +1632,7 @@ def format_conditional_line(line: ConditionalLine, **config_options) -> Conditio
             comment = format_strings(line.comment, comment=True)
 
         line_break = f"{config_options['line_break']}\n"
-        first_line = f"\\text{a}Da{b}&\quad {latex_condition}: {line_break}"
+        first_line = f"\\text{a}Da{b}&\\quad {latex_condition}: {line_break}"
         if line.condition_type == "else":
             first_line = ""
         line.latex_condition = first_line
